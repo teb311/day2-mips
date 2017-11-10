@@ -1,0 +1,77 @@
+.global nesting_functions
+
+nesting_functions:
+# to make the mapping more clean in my head I just let nesting_functions
+# fall through to 'a'
+
+# A is going to need to save a return address and 2 values in "saved" registers
+a:
+	# a needs to preserve 2 values across calls, (n, and x)
+	move $t0, $fp
+	move $fp, $sp
+	add  $sp, $sp, -16
+	sw   $ra, 16($sp)
+	sw   $s0, 12($sp)
+	sw   $s1, 8($sp)
+	sw   $t0, 4($sp)
+
+	# Call b
+	move $s0, $a0 # enforce preservation of n
+	jal  b
+	move $s1, $v0 # Save x
+
+	# call x
+	move $a0, $s1
+	jal  c
+
+	# accumulate the adds into the return register
+	add $v0, $v0, $s0
+	add $v0, $v0, $s1
+
+	# Restore the call stack
+	lw $ra, 16($sp)
+	lw $s0, 12($sp)
+	lw $s1, 8($sp)
+	lw $fp, 4($sp)
+	addi $sp, $sp, 16
+
+	jr $ra
+
+
+# b is an internal function, it:
+#   Needs to preserve a return address
+#   Ought to preserve a saved register
+b:
+	# b needs 2 words of storage, one for the variable  'x' and one for the return address
+	move $t0, $fp
+	move $fp, $sp
+	add  $sp, $sp, -12
+	sw   $ra, 12($sp)
+	sw   $s0, 8($sp)
+	sw   $t0, 4($sp)
+
+
+	# Call c to get the value for x
+	# $a0 already has the value we want for the argument to c
+	# But c may change that value (for example if it calls a subroutine)
+	move $s0, $a0 # So we save it
+	jal c
+	mult $v0, $s0
+
+	mflo $v0 # Here we are assuming the multiplication fits in 32 bits...
+
+	# Need to restore stuff from the stack before returning
+	lw $ra, 12($sp)
+	lw $s0, 8($sp)
+	lw $fp, 4($sp)
+	addi $sp, $sp, 12
+
+	jr $ra
+
+
+# C is a simple leaf function, it:
+#  needs no memory for saved data
+#  doesn't call a subroutine
+c:
+	addi $v0, $a0, 5
+	jr $ra

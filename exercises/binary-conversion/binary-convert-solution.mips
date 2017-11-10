@@ -1,0 +1,17 @@
+.global binary_convert
+
+binary_convert:
+	move $t1, $zero		                    # Start the accumulator at zero
+
+handle_digit:
+	lb   $t3, 0($a0)                      # Put the value of the provided address argument in t1 offset by current digit count
+	beqz $t3, handle_string_termination
+	sll $t1, $t1, 1                       # Found another digit? shift left to power the previously found digits up by 2
+	subi $t3, $t3, 48                     # Convert ASCII value to relative int value (should be 1 or zero)
+	add $t1, $t1, $t3
+	addi $a0, $a0, 1                      # Set argument to next digit
+	j handle_digit
+	
+handle_string_termination:
+	move $v0, $t1               # Load the return value from the accumulator
+	jr   $ra

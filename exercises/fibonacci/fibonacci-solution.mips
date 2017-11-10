@@ -1,0 +1,46 @@
+.global fibonacci
+
+# We need 2 saved registers (for the n-1 result, one for n) and to adjust the stack pointer each time
+fibonacci:
+	# Create the stack frame, save the saver registers
+	move $t0, $fp
+	move $fp, $sp
+	add  $sp, $sp, -16
+	sw   $ra, 16($sp)
+	sw   $s0, 12($sp)
+	sw   $s1, 8($sp)
+	sw   $t0, 4($sp)
+
+	# branch for the base case
+	li $t0, 1
+	ble $a0, $t0, base_case
+
+	move $s0, $a0    # Put n into a saved register
+
+	# recursive call for n-1
+	subi $a0, $s0, 1
+	jal fibonacci
+
+	# Move the recursive result into a saved register
+	move $s1, $v0
+
+	# recursive call to n-2
+	subi $a0, $s0, 2
+	jal fibonacci
+
+	add $v0, $v0, $s1 # Add the results of the two recursive calls into the return register
+
+	# Restore stack frame and return
+restore_return:
+
+	lw   $ra, 16($sp)
+	lw   $s0, 12($sp)
+	lw   $s1, 8($sp)
+	lw   $fp, 4($sp)
+	addi  $sp, $sp, 16
+
+ 	jr $ra
+
+base_case:
+	li $v0, 1
+	j restore_return

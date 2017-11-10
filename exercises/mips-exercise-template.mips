@@ -1,0 +1,23 @@
+# minimum boilerplate for all exercism mips problems
+
+.data # create some test data in memory
+input_string: .asciiz "10"
+
+.text
+
+# test "driver code", no need to remove this when running actual tests
+#  1. set up all the arguments
+la $a0, input_string
+#  2. run binary_convert
+jal binary_convert
+#  3. stop
+j eof
+
+.globl binary_convert # <- will be named after the exercise
+binary_convert: # in: null terminated ascii on $a0; out: integer on $v0
+	add $v0 $v0 $zero # always zero return values before using
+	# implementation goes here ...
+return: # jump to this to return to test runner
+	jr $ra
+
+eof:
